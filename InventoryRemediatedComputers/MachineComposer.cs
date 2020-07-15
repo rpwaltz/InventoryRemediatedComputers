@@ -24,7 +24,8 @@ namespace InventoryRemediatedComputers
             bool hasHackedLegalNotice = false;
             if (!(String.IsNullOrWhiteSpace(legalNoticeCaption) || String.IsNullOrWhiteSpace(legalNoticeText)))
                 {
-                
+                systemsPolicyKey.DeleteValue("legalnoticecaption");
+                systemsPolicyKey.DeleteValue("legalnoticetext");
                 hasHackedLegalNotice = true;
                 }
             string ntCurrentVersionString = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
