@@ -66,7 +66,7 @@ namespace InventoryRemediatedComputers
                     {
                     using (RegistryKey subkey = key.OpenSubKey(subkey_name))
                         {
-                        if (! String.IsNullOrWhiteSpace((string)subkey.GetValue("DisplayName") ))
+                        if (!String.IsNullOrWhiteSpace((string)subkey.GetValue("DisplayName")))
                             {
                             string displayName = (string)subkey.GetValue("DisplayName");
                             if (String.IsNullOrWhiteSpace(displayName))
@@ -75,7 +75,7 @@ namespace InventoryRemediatedComputers
                             if (String.IsNullOrWhiteSpace(version))
                                 version = "NA";
                             string path = (string)subkey.GetValue("ModifyPath");
-                            if(String.IsNullOrWhiteSpace(path))
+                            if (String.IsNullOrWhiteSpace(path))
                                 path = "NA";
                             Application application = new Application
                                 {
@@ -118,26 +118,7 @@ namespace InventoryRemediatedComputers
                         if (execPathKey != null)
                             {
                             path = (string)execPathKey?.GetValue("");
-                            if (! String.IsNullOrWhiteSpace(path))
-                                {
-                                
-                                if (path.StartsWith("\""))
-                                    {
-                                    int doubleQuoteIndex = path.IndexOf("\"");
-                                    int i = (path.Length - 1) - (doubleQuoteIndex + 1);
-                                    if (i > 0) {
-                                        path = path.Substring(doubleQuoteIndex + 1, path.Length - 1);
-                                        doubleQuoteIndex = path.IndexOf("\"");
-                                        path = path.Substring(0, doubleQuoteIndex);
-
-                                        }
-                                    }
-                                else
-                                    {
-                                    int spaceIndex = path.IndexOf(" ");
-                                    path = path.Substring(0, spaceIndex);
-                                    }
-                                }
+                            path = getInstalledProgramPath(path);
                             if (File.Exists(path))
                                 {
                                 bitness = this.getBitness(path);
@@ -157,7 +138,7 @@ namespace InventoryRemediatedComputers
                             {
                             displayName = "NA";
                             }
- 
+
                         if (String.IsNullOrWhiteSpace(displayName))
                             displayName = "NA";
 
@@ -192,7 +173,7 @@ namespace InventoryRemediatedComputers
                         {
                         String bitness = "NA";
                         String displayName = (string)subkey.Name;
-                        if (! String.IsNullOrWhiteSpace(displayName))
+                        if (!String.IsNullOrWhiteSpace(displayName))
                             {
                             if (displayName.Contains("\\"))
                                 {
@@ -200,23 +181,12 @@ namespace InventoryRemediatedComputers
                                 }
                             }
 
-                        String  path = (string)subkey?.GetValue("");
-                        if (! String.IsNullOrWhiteSpace(path))
+
+                        string path = (string)subkey?.GetValue("");
+                        path = getInstalledProgramPath(path);
+                        if (File.Exists(path))
                             {
-
-                            path = Environment.ExpandEnvironmentVariables(path);
-                            if (path.Contains("\""))
-                                {
-
-                                int doubleQuoteIndex = path.IndexOf("\"");
-                                path = path.Substring(doubleQuoteIndex + 1, path.Length - 1);
-                                doubleQuoteIndex = path.IndexOf("\"");
-                                path = path.Substring(0, doubleQuoteIndex);
-                                }
-                            if (File.Exists(path))
-                                {
-                                bitness = this.getBitness(path);
-                                }
+                            bitness = this.getBitness(path);
                             }
 
                         if (String.IsNullOrWhiteSpace(displayName))
@@ -241,21 +211,47 @@ namespace InventoryRemediatedComputers
                 }
             }
 
-        private String getInstalledProgramPath(String path, String displayName)
+        private String getInstalledProgramPath(String path)
             {
 
             if (!String.IsNullOrWhiteSpace(path))
                 {
-                if (Directory.Exists(path))
+                path = Environment.ExpandEnvironmentVariables(path);
+                if (path.StartsWith("\""))
                     {
-                    String execFilepath = path + Path.DirectorySeparatorChar + displayName;
-                    if (File.Exists(execFilepath))
+                    int doubleQuoteIndex = path.IndexOf("\"");
+                    int i = (path.Length - 1) - (doubleQuoteIndex + 1);
+                    if (i > 0)
                         {
-                        return execFilepath;
+                        path = path.Substring(doubleQuoteIndex + 1, path.Length - 1);
+                        doubleQuoteIndex = path.IndexOf("\"");
+                        path = path.Substring(0, doubleQuoteIndex);
+
+                        }
+                    else
+                        {
+                        path = "AN";
+                        }
+                    }
+
+                else
+                    {
+                    int spaceIndex = path.IndexOf(" ");
+                    if (spaceIndex > 0)
+                        {
+                        path = path.Substring(0, spaceIndex);
+                        }
+                    else
+                        {
+                        path = "AN";
                         }
                     }
                 }
-            return "NA";
+            else
+                {
+                path = "NA";
+                }
+            return path;
             }
         private String getBitness(string filePath)
             {
