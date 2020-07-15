@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Diagnostics;
+using System.IO;
 using CommandLine;
 
 
@@ -27,7 +27,7 @@ namespace InventoryRemediatedComputers
 
         private static string password;
         private static string userid;
-
+        private static string errorLogPath;
         static void Main(string[] args)
             {
             Options options = new Options();
@@ -53,11 +53,19 @@ namespace InventoryRemediatedComputers
         public Boolean Start()
             {
             bool complete = false;
+            //To get the location the assembly normally resides on disk or the install directory
+            string executablePath = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
+
+            //once you have the path you get the directory with:
+            var executableDirectory = System.IO.Path.GetDirectoryName(executablePath);
+            Uri executableDirectoryURI = new Uri(executableDirectory);
+            errorLogPath = executableDirectoryURI.LocalPath + Path.DirectorySeparatorChar + System.Environment.MachineName + "Error.log";
+ 
             try
                 {
 
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                
+
                 ConnectionStringsSection connectionStringsSection = (ConnectionStringsSection)config.GetSection("connectionStrings");
                 
                 string strConn = connectionStringsSection.ConnectionStrings["MachineInventory"].ConnectionString;
@@ -86,8 +94,8 @@ namespace InventoryRemediatedComputers
                             }
                         catch (System.Data.Entity.Validation.DbEntityValidationException dbEx)
                             {
-                            Exception raise = dbEx;
-
+                            printMessageToError(dbEx.Message);
+                            printMessageToError( dbEx.StackTrace);
                             foreach (var validationErrors in dbEx.EntityValidationErrors)
                                 {
                                 foreach (var validationError in validationErrors.ValidationErrors)
@@ -95,12 +103,12 @@ namespace InventoryRemediatedComputers
                                     string message = string.Format("{0}:{1}",
                                         validationErrors.Entry.Entity.ToString(),
                                         validationError.ErrorMessage);
+                                    printMessageToError(message );
                                     // raise a new exception nesting
                                     // the current instance as InnerException
-                                    raise = new InvalidOperationException(message, raise);
                                     }
                                 }
-                            throw raise;
+      
                             }
                         
                         }
@@ -108,11 +116,19 @@ namespace InventoryRemediatedComputers
                 }
             catch (Exception ex)
                 {
-
+                printMessageToError(ex.Message);
+                printMessageToError(ex.StackTrace);
                 return false;
                 }
             return complete;
             }
+            public static void printMessageToError( String message)
+            {
+            using(StreamWriter writer = new StreamWriter(errorLogPath, true ) )
+            {
+                writer.WriteLine(message);
 
+            }
+            }
         }
     }

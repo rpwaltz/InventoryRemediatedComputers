@@ -49,6 +49,8 @@ namespace InventoryRemediatedComputers
                 }
             catch (Exception ex)
                 {
+                Program.printMessageToError(ex.Message);
+                Program.printMessageToError(ex.StackTrace);
                 return false;
                 }
             return true;
