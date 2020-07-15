@@ -23,7 +23,7 @@ namespace InventoryRemediatedComputers
     class Program
         {
         private const int SUCCESS = 0;
-        private const int ERROR = -1;
+        private const int ERROR = 1;
 
         private static string password;
         private static string userid;
