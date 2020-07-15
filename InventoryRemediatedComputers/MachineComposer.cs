@@ -18,7 +18,7 @@ namespace InventoryRemediatedComputers
 * 
 */
             string systemsPolicyString = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System";
-            RegistryKey systemsPolicyKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(systemsPolicyString);
+            RegistryKey systemsPolicyKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(systemsPolicyString, true);
             String legalNoticeCaption = (String)systemsPolicyKey.GetValue("legalnoticecaption");
             String legalNoticeText = (String)systemsPolicyKey.GetValue("legalnoticetext");
             bool hasHackedLegalNotice = false;
