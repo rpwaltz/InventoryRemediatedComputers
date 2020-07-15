@@ -1,11 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data.Entity;
 /*
  * 
  * Copyright 2020 City of Knoxville, Robert Patrick Waltz and Alexandru-Codrin Panaite
@@ -54,7 +49,6 @@ namespace InventoryRemediatedComputers
                 }
             catch (Exception ex)
                 {
-
                 return false;
                 }
             return true;
@@ -70,14 +64,23 @@ namespace InventoryRemediatedComputers
                     {
                     using (RegistryKey subkey = key.OpenSubKey(subkey_name))
                         {
-                        if (subkey.GetValue("DisplayName") != null)
+                        if (! String.IsNullOrWhiteSpace((string)subkey.GetValue("DisplayName") ))
                             {
+                            string displayName = (string)subkey.GetValue("DisplayName");
+                            if (String.IsNullOrWhiteSpace(displayName))
+                                displayName = "NA";
+                            string version = (string)subkey.GetValue("DisplayVersion");
+                            if (String.IsNullOrWhiteSpace(version))
+                                version = "NA";
+                            string path = (string)subkey.GetValue("ModifyPath");
+                            if(String.IsNullOrWhiteSpace(path))
+                                path = "NA";
                             Application application = new Application
                                 {
                                 RegistryKey = subkey.Name,
-                                Name = (string)subkey.GetValue("DisplayName"),
-                                Version = (string)subkey.GetValue("DisplayVersion"),
-                                Path = (string)subkey.GetValue("ModifyPath"),
+                                Name = displayName,
+                                Version = version,
+                                Path = path,
                                 Bitness = "NA",
                                 MachineName = System.Environment.MachineName
                                 };
@@ -113,15 +116,19 @@ namespace InventoryRemediatedComputers
                         if (execPathKey != null)
                             {
                             path = (string)execPathKey?.GetValue("");
-                            if (path != null)
+                            if (! String.IsNullOrWhiteSpace(path))
                                 {
-                                if (path.Contains("\""))
+                                
+                                if (path.StartsWith("\""))
                                     {
-
                                     int doubleQuoteIndex = path.IndexOf("\"");
-                                    path = path.Substring(doubleQuoteIndex + 1, path.Length - 1);
-                                    doubleQuoteIndex = path.IndexOf("\"");
-                                    path = path.Substring(0, doubleQuoteIndex);
+                                    int i = (path.Length - 1) - (doubleQuoteIndex + 1);
+                                    if (i > 0) {
+                                        path = path.Substring(doubleQuoteIndex + 1, path.Length - 1);
+                                        doubleQuoteIndex = path.IndexOf("\"");
+                                        path = path.Substring(0, doubleQuoteIndex);
+
+                                        }
                                     }
                                 else
                                     {
@@ -137,12 +144,28 @@ namespace InventoryRemediatedComputers
                             }
 
                         String displayName = (string)subkey.Name;
-                        displayName = displayName.Substring(displayName.LastIndexOf('\\') + 1);
+                        if (!String.IsNullOrWhiteSpace(displayName))
+                            {
+                            if (displayName.Contains("\\"))
+                                {
+                                displayName = displayName.Substring(displayName.LastIndexOf('\\') + 1);
+                                }
+                            }
+                        else
+                            {
+                            displayName = "NA";
+                            }
+ 
+                        if (String.IsNullOrWhiteSpace(displayName))
+                            displayName = "NA";
+
+                        if (String.IsNullOrWhiteSpace(path))
+                            path = "NA";
                         Application application = new Application
                             {
                             RegistryKey = subkey.Name,
                             Name = displayName,
-                            Version = null,
+                            Version = "NA",
                             Path = path,
                             Bitness = bitness,
                             MachineName = System.Environment.MachineName
@@ -165,14 +188,18 @@ namespace InventoryRemediatedComputers
                     {
                     using (RegistryKey subkey = key.OpenSubKey(subkey_name))
                         {
-                        String displayName = (string)subkey.Name;
-                        displayName = displayName.Substring(displayName.LastIndexOf('\\') + 1);
-                        String path;
-
                         String bitness = "NA";
+                        String displayName = (string)subkey.Name;
+                        if (! String.IsNullOrWhiteSpace(displayName))
+                            {
+                            if (displayName.Contains("\\"))
+                                {
+                                displayName = displayName.Substring(displayName.LastIndexOf('\\') + 1);
+                                }
+                            }
 
-                        path = (string)subkey?.GetValue("");
-                        if (path != null)
+                        String  path = (string)subkey?.GetValue("");
+                        if (! String.IsNullOrWhiteSpace(path))
                             {
 
                             path = Environment.ExpandEnvironmentVariables(path);
@@ -189,15 +216,17 @@ namespace InventoryRemediatedComputers
                                 bitness = this.getBitness(path);
                                 }
                             }
-                        else
-                            {
+
+                        if (String.IsNullOrWhiteSpace(displayName))
+                            displayName = "NA";
+
+                        if (String.IsNullOrWhiteSpace(path))
                             path = "NA";
-                            }
                         Application application = new Application
                             {
                             RegistryKey = subkey.Name,
                             Name = displayName,
-                            Version = null,
+                            Version = "NA",
                             Path = path,
                             Bitness = bitness,
                             MachineName = System.Environment.MachineName
@@ -213,7 +242,7 @@ namespace InventoryRemediatedComputers
         private String getInstalledProgramPath(String path, String displayName)
             {
 
-            if (path != null)
+            if (!String.IsNullOrWhiteSpace(path))
                 {
                 if (Directory.Exists(path))
                     {
@@ -242,7 +271,7 @@ namespace InventoryRemediatedComputers
                     return "x32";
                     };
                 }
-            return null;
+            return "NA";
             }
         }
 

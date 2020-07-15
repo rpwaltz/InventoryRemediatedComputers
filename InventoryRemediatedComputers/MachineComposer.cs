@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Configuration;
 using Microsoft.Win32;
 
 
@@ -19,16 +14,6 @@ namespace InventoryRemediatedComputers
         public bool ComposeMachine()
             {
 
-            System.Diagnostics.Debug.WriteLine(System.Environment.MachineName);
-            if (System.Environment.Is64BitOperatingSystem)
-                {
-                System.Diagnostics.Debug.WriteLine("64 bit OS");
-                }
-            else
-                {
-                System.Diagnostics.Debug.WriteLine("32 bit OS");
-                }
-
             /* check out legal notices
 * 
 */
@@ -37,18 +22,32 @@ namespace InventoryRemediatedComputers
             String legalNoticeCaption = (String)systemsPolicyKey.GetValue("legalnoticecaption");
             String legalNoticeText = (String)systemsPolicyKey.GetValue("legalnoticetext");
             bool hasHackedLegalNotice = false;
-            if (legalNoticeCaption.Length > 0 || legalNoticeText.Length > 0)
+            if (!(String.IsNullOrWhiteSpace(legalNoticeCaption) || String.IsNullOrWhiteSpace(legalNoticeText)))
                 {
-                System.Diagnostics.Debug.WriteLine("found legalNotice: " + legalNoticeCaption + " " + legalNoticeText);
+                
                 hasHackedLegalNotice = true;
                 }
             string ntCurrentVersionString = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
             RegistryKey ntCurrentVersionKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(ntCurrentVersionString);
             String productName = (String)ntCurrentVersionKey.GetValue("ProductName");
-            String releaseId = (String)ntCurrentVersionKey.GetValue("ReleaseId");
+            String releaseId;
+            if (productName.Contains("10"))
+                {
+                releaseId = (String)ntCurrentVersionKey.GetValue("ReleaseId");
+                }
+            else
+                {
+                string csdVerion = (String)ntCurrentVersionKey.GetValue("CSDVersion");
+                string csdBuildNumber = (String)ntCurrentVersionKey.GetValue("CSDBuildNumber");
+                releaseId = csdVerion + " " + csdBuildNumber;
+                }
+
+            if (String.IsNullOrWhiteSpace(releaseId))
+                {
+                releaseId = "NA";
+                }
             Machine machine = new Machine { MachineName = System.Environment.MachineName, isOSx64 = System.Environment.Is64BitOperatingSystem, ProductName = productName, Version = releaseId, hasRegistryHack = hasHackedLegalNotice };
 
-            System.Diagnostics.Debug.WriteLine("ProductName " + productName + " ReleaseId " + releaseId);
 
             this.machineInventory.Machines.Add(machine);
             return true;

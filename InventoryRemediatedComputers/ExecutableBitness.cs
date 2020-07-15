@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Win32;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
-using System.IO;
+
 
 // https://stackoverflow.com/questions/3782191/how-do-i-determine-if-a-net-application-is-32-or-64-bit
 // http://zuga.net/articles/cs-how-to-determine-if-a-program-process-or-file-is-32-bit-or-64-bit/#getbinarytype
@@ -23,7 +17,7 @@ namespace InventoryRemediatedComputers
 
             BinaryType bt;
             if (!GetBinaryType(filePath, out bt))
-                throw new ApplicationException("Could not read binary type x64 from : " + filePath);
+                return false;
 
             if (bt.Equals(BinaryType.SCS_64BIT_BINARY))
                 {
@@ -40,7 +34,7 @@ namespace InventoryRemediatedComputers
 
             BinaryType bt;
             if (!GetBinaryType(filePath, out bt))
-                throw new ApplicationException("Could not read binary type x32 from :" + filePath);
+                return false;
             if (bt.Equals(BinaryType.SCS_32BIT_BINARY))
                 {
                 return true;

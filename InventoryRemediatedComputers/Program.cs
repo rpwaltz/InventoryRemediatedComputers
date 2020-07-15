@@ -1,10 +1,7 @@
 ﻿using System;
-
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using CommandLine;
 
 
@@ -49,43 +46,72 @@ namespace InventoryRemediatedComputers
             }
         static void RunOptions(Options options)
             {
-            System.Diagnostics.Debug.WriteLine(options.pwd);
-            System.Diagnostics.Debug.WriteLine(options.userid);
             Program.password = options.pwd;
             Program.userid = options.userid;
             }
+
         public Boolean Start()
             {
+            bool complete = false;
             try
                 {
-                System.Diagnostics.Debug.WriteLine(Program.userid);
-                System.Diagnostics.Debug.WriteLine(Program.password);
 
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                
                 ConnectionStringsSection connectionStringsSection = (ConnectionStringsSection)config.GetSection("connectionStrings");
-
+                
                 string strConn = connectionStringsSection.ConnectionStrings["MachineInventory"].ConnectionString;
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(strConn);
 
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(strConn);
+                
                 builder.Password = Program.password;
                 builder.UserID = Program.userid;
+                
                 connectionStringsSection.ConnectionStrings["MachineInventory"].ConnectionString = builder.ConnectionString;
                 config.Save();
                 ConfigurationManager.RefreshSection("connectionStrings");
-                System.Diagnostics.Debug.WriteLine(builder.ConnectionString);
-
+                
                 MachineInventory machineInventory = new MachineInventory();
                 MachineComposer machineComposer = new MachineComposer(machineInventory);
-                bool complete = machineComposer.ComposeMachine();
-                ApplicationsComposer applicationsComposer = new ApplicationsComposer(machineInventory);
-                complete = applicationsComposer.composeApplicatons();
-                machineInventory.SaveChanges();
+                complete = machineComposer.ComposeMachine();
+                if (complete)
+                    {
+                    ApplicationsComposer applicationsComposer = new ApplicationsComposer(machineInventory);
+                    complete = applicationsComposer.composeApplicatons();
+                    if (complete) 
+                        {
+                        try
+                            {
+                            machineInventory.SaveChanges();
+                            }
+                        catch (System.Data.Entity.Validation.DbEntityValidationException dbEx)
+                            {
+                            Exception raise = dbEx;
+
+                            foreach (var validationErrors in dbEx.EntityValidationErrors)
+                                {
+                                foreach (var validationError in validationErrors.ValidationErrors)
+                                    {
+                                    string message = string.Format("{0}:{1}",
+                                        validationErrors.Entry.Entity.ToString(),
+                                        validationError.ErrorMessage);
+                                    // raise a new exception nesting
+                                    // the current instance as InnerException
+                                    raise = new InvalidOperationException(message, raise);
+                                    }
+                                }
+                            throw raise;
+                            }
+                        
+                        }
+                    }
                 }
             catch (Exception ex)
                 {
+
                 return false;
                 }
-            return true;
+            return complete;
             }
 
         }
